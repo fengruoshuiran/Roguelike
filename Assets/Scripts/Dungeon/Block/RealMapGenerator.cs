@@ -14,8 +14,8 @@ namespace Ruoran.Roguelike.Dungeon
             {
                 for (int j = 0; j < BlockMap.GetLength(1); j++)
                 {
-                    string s = BlockMap[i, j].BlockType;
-                    if (s == "Wall" || s == "Obstacle" || s == "None")
+                    var info = BlockMap[i, j];
+                    if (info.CanPass == false)
                     {
                         Wall.SetTile(new Vector3Int(i, j, 0), TileChooser.RandTile("Obstacle"));
                     }

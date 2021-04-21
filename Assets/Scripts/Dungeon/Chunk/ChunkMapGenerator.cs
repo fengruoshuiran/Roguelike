@@ -51,16 +51,19 @@ namespace Ruoran.Roguelike.Dungeon
 
         private static void BuildInitRoom()
         {
+            // 初始化房间记录
+            RoomGenerator.Reset();
+
             // 根据关卡描述的生成欲望尝试生成次数，公式如下
-            var tryBuildRoomTime = (int)(LevelDescription.MaxChunkX * LevelDescription.MaxChunkY / 10.0 * LevelDescription.RoomRate);
-            var tryBuildDoorTime = (int)(RNG.RandInt(1, 2) * LevelDescription.DoorRate);
+            var tryBuildRoomTime = (int)(LevelDescription.MaxChunkX * LevelDescription.MaxChunkY / 5.0 * LevelDescription.RoomRate);
+            var tryBuildDoorTime = (int)(RNG.RandInt(2, 4) * LevelDescription.DoorRate);
 
             // 尝试生成房间
             for (int i = 0; i < tryBuildRoomTime; i++)
             {
                 // 禁止在边界一圈区块生成房间，因此排除边界点。房间向右上生长，因此右上保留空间
-                var centerX = RNG.RandInt(1 + Constant.OverBorderChunkSize, LevelDescription.MaxChunkX - 2 - LevelDescription.MaxRoomSize - Constant.OverBorderChunkSize);
-                var centerY = RNG.RandInt(1 + Constant.OverBorderChunkSize, LevelDescription.MaxChunkY - 2 - LevelDescription.MaxRoomSize - Constant.OverBorderChunkSize);
+                var centerX = RNG.RandInt(1 + Constant.OverBorderChunkSize, LevelDescription.MaxChunkX - 2 - LevelDescription.MaxRoomSize);
+                var centerY = RNG.RandInt(1 + Constant.OverBorderChunkSize, LevelDescription.MaxChunkY - 2 - LevelDescription.MaxRoomSize);
                 var roomInfo = WeightListUtils.HitWeightListByBinary(LevelDescription.RoomWeightList) as RoomChunkWeightInfo;
 
                 // 保证目标区域为空
@@ -75,6 +78,8 @@ namespace Ruoran.Roguelike.Dungeon
 
                 if (flag)
                 {
+                    // 记录房间信息供后续生成
+                    RoomGenerator.Add(centerX * Constant.ChunkSize, centerY * Constant.ChunkSize, (centerX + roomInfo.X ) * Constant.ChunkSize, (centerY + roomInfo.Y) * Constant.ChunkSize);
                     // 填充目标区域为房间区块
                     for (int x = centerX; x < centerX + roomInfo.X; x++)
                     {
@@ -92,6 +97,7 @@ namespace Ruoran.Roguelike.Dungeon
                         {
                             case 1:
                                 randPos = RNG.RandInt(0, roomInfo.X - 1);
+                                if ((ChunkMap[centerX + randPos, centerY + roomInfo.Y - 1] as ChunkInfoRoom).Dir != 0) break;
                                 (ChunkMap[centerX + randPos, centerY + roomInfo.Y - 1] as ChunkInfoRoom).Dir = 1;
                                 // 保证邻接房间下也会生成对应的门
                                 if (ChunkMap[centerX + randPos, centerY + roomInfo.Y - 1 + 1] is ChunkInfoRoom)
@@ -106,6 +112,7 @@ namespace Ruoran.Roguelike.Dungeon
                                 break;
                             case 2:
                                 randPos = RNG.RandInt(0, roomInfo.X - 1);
+                                if ((ChunkMap[centerX + randPos, centerY] as ChunkInfoRoom).Dir != 0) break;
                                 (ChunkMap[centerX + randPos, centerY] as ChunkInfoRoom).Dir = 2;
                                 // 保证邻接房间下也会生成对应的门
                                 if (ChunkMap[centerX + randPos, centerY - 1] is ChunkInfoRoom)
@@ -120,6 +127,7 @@ namespace Ruoran.Roguelike.Dungeon
                                 break;
                             case 3:
                                 randPos = RNG.RandInt(0, roomInfo.Y - 1);
+                                if ((ChunkMap[centerX, centerY + randPos] as ChunkInfoRoom).Dir != 0) break;
                                 (ChunkMap[centerX, centerY + randPos] as ChunkInfoRoom).Dir = 3;
                                 // 保证邻接房间下也会生成对应的门
                                 if (ChunkMap[centerX - 1, centerY + randPos] is ChunkInfoRoom)
@@ -134,6 +142,7 @@ namespace Ruoran.Roguelike.Dungeon
                                 break;
                             case 4:
                                 randPos = RNG.RandInt(0, roomInfo.Y - 1);
+                                if ((ChunkMap[centerX + roomInfo.X - 1, centerY + randPos] as ChunkInfoRoom).Dir != 0) break;
                                 (ChunkMap[centerX + roomInfo.X - 1, centerY + randPos] as ChunkInfoRoom).Dir = 4;
                                 // 保证邻接房间下也会生成对应的门
                                 if (ChunkMap[centerX + roomInfo.X - 1 + 1, centerY + randPos] is ChunkInfoRoom)
